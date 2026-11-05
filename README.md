@@ -1,6 +1,6 @@
-# Before After Slider
+# Batch Studio
 
-A browser-local web app with two modes, selected using the header navigation. Images never leave your browser.
+A browser-local workspace for batch image processing, with comparison and selection modes available through the header navigation. Images never leave your browser.
 
 Both modes share one responsive workspace: the same header, preview dimensions, right-hand inspector, source cards, fields, and export area. On smaller screens the inspector moves below the preview. Navigation between `#confronto` and `#selezione` keeps loaded images and selections in memory. All interface labels are in Italian.
 

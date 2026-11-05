@@ -18,11 +18,6 @@ let renderVersion = 0;
 let previews = { left: null, right: null };
 let dragging = null;
 
-function status(message, error = false) {
-  $("selectionStatus").textContent = message;
-  $("selectionStatus").classList.toggle("error", error);
-}
-
 function setMode(next) {
   if (busy || document.querySelector(".recording")) return false;
   active = next;
@@ -35,7 +30,7 @@ function setMode(next) {
   $("workspaceTitle").textContent = next ? "Selezione immagini" : "Confronto immagini";
   $("workspaceDescription").textContent = next ? "Confronta le tue raccolte e conserva le immagini che preferisci." :
     "Due immagini, ogni dettaglio. Confronta e crea un prima e dopo.";
-  document.title = `${next ? "Selezione" : "Confronto"} — Before / After`;
+  document.title = `${next ? "Selezione" : "Confronto"} — Batch Studio`;
   if (next) renderPair();
   return true;
 }
@@ -57,6 +52,7 @@ function refreshControls() {
   $("nextPair").disabled = busy || selection.index >= total - 1;
   $("undoSelection").disabled = busy || !selection.history.length;
   $("saveSelection").disabled = busy || !kept;
+  $("saveLabel").textContent = busy ? "Salvataggio…" : "Salva immagini";
   $("imageFormat").disabled = busy;
   $("saveDestination").disabled = busy;
   $("selectionHandle").tabIndex = total && !busy ? 0 : -1;
@@ -67,7 +63,7 @@ function refreshControls() {
     const collection = selection[side];
     const entry = collection[selection.index];
     const title = side === "left" ? "Left" : "Right";
-    $(side + "Count").textContent = `${collection.length} immagini`;
+    $(side + "Count").textContent = `${collection.length} ${collection.length === 1 ? "immagine" : "immagini"}`;
     $("remove" + title).disabled = busy || !entry || entry.excluded;
     const name = entry ? (entry.file.webkitRelativePath || entry.file.name) + (entry.excluded ? " · esclusa" : "") : "Nessuna immagine";
     $(side + "Name").textContent = name;
@@ -131,8 +127,7 @@ async function renderPair() {
       emptyLabel(side, "");
     } catch (error) {
       if (version !== renderVersion) return;
-      emptyLabel(side, "Formato non leggibile · puoi escludere questa immagine");
-      status(error.message, true);
+      emptyLabel(side, error.message);
     }
     draw();
   }));
@@ -178,17 +173,15 @@ for (const side of ["left", "right"]) {
       const files = Array.from(event.target.files);
       const count = importFiles(selection, side, files);
       event.target.value = "";
-      if (!count) { status("Nessuna immagine trovata nella selezione.", true); return; }
+      if (!count) { alert("Nessuna immagine trovata nella selezione."); return; }
       slider = 0.5;
       dirty = true;
-      status(`${count} immagini caricate a ${side === "left" ? "sinistra" : "destra"}.${files.length > count ? ` Ignorati ${files.length - count} file non immagine.` : ""} Ogni nuovo caricamento sostituisce quel lato.`);
       renderPair();
     });
   }
   $("remove" + (side === "left" ? "Left" : "Right")).addEventListener("click", () => {
     if (busy || !excludeImage(selection, side)) return;
     dirty = true;
-    status("Immagine esclusa dal salvataggio. Ctrl+Z per ripristinarla.");
     renderPair();
   });
 }
@@ -204,7 +197,6 @@ function move(delta) {
 function undo() {
   if (busy || !undoExclusion(selection)) return;
   dirty = true;
-  status("Immagine ripristinata. Sei tornato al confronto corrispondente.");
   renderPair();
 }
 $("previousPair").addEventListener("click", () => move(-1));
@@ -272,7 +264,6 @@ const folderSupported = typeof window.showDirectoryPicker === "function";
 if (!folderSupported) {
   $("saveDestination").querySelector('[value="folder"]').disabled = true;
   $("saveDestination").value = "zip";
-  status("Carica le due raccolte. In questo browser puoi salvare uno ZIP da estrarre nella cartella che preferisci; per salvare direttamente in cartella usa Chrome o Edge.");
 }
 
 $("saveSelection").addEventListener("click", async () => {
@@ -291,7 +282,7 @@ $("saveSelection").addEventListener("click", async () => {
     if (folder) for await (const name of folder.keys()) occupied.add(name.toLowerCase());
     const zip = folder ? null : new ImageZip();
     for (const entry of entries) {
-      status(`${folder ? "Salvataggio" : "Preparazione ZIP"} ${completed + 1} / ${entries.length} · ${entry.file.name}`);
+      $("saveLabel").textContent = `Salvataggio ${completed + 1} / ${entries.length}`;
       const blob = await convert(entry.file, format);
       if (folder) {
         await writeFolderImage(folder, entry.name, blob, occupied);
@@ -300,11 +291,10 @@ $("saveSelection").addEventListener("click", async () => {
     }
     if (zip) download(zip.toBlob());
     dirty = false;
-    status(folder ? `${completed} immagini ${format.toUpperCase()} salvate in “${folder.name}”.` :
-      `ZIP pronto: ${completed} immagini ${format.toUpperCase()}. Estrailo nella cartella che preferisci.`);
   } catch (error) {
-    if (error.name === "AbortError" && !completed) status("Salvataggio annullato. La selezione è conservata.");
-    else status(`${error.message} ${inFolder ? `${completed} di ${entries.length} immagini salvate.` : "Lo ZIP non è stato scaricato."} La selezione è conservata: puoi correggere e riprovare.`, true);
+    if (error.name !== "AbortError" || completed) {
+      alert(`${error.message} ${inFolder ? `${completed} di ${entries.length} immagini salvate.` : "Lo ZIP non è stato scaricato."} La selezione è conservata: puoi correggere e riprovare.`);
+    }
   } finally { busy = false; refreshControls(); }
 });
 

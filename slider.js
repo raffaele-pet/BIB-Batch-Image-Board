@@ -79,8 +79,6 @@ function setReadyState() {
   document.querySelectorAll("[data-slider-pick]").forEach((button) => { button.disabled = state.recording; });
   document.querySelectorAll(".mode-navigation a").forEach((link) => { link.setAttribute("aria-disabled", String(state.recording)); });
   document.getElementById("recordLabel").textContent = state.recording ? "Registrazione in corso…" : "Registra video";
-  document.getElementById("recordStatus").textContent = state.recording ? "Creazione del video. Attendi il completamento." :
-    ready ? "Il video verrà scaricato al termine della registrazione." : "Carica entrambe le immagini per registrare.";
   stage.classList.toggle("has-before", Boolean(state.before));
   stage.classList.toggle("has-after", Boolean(state.after));
 }
