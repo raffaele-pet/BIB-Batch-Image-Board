@@ -1,8 +1,9 @@
+import { t } from "./i18n.js?v=20261106-bib";
 import { createSelection, pairCount, importFiles, excludeImage, undoExclusion, navigate, exportEntries } from "./selection-model.js";
 import { ImageZip } from "./selection-zip.js";
 import { writeFolderImage } from "./selection-folder.js";
 import { updateThumbnail } from "./workspace-ui.js";
-import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-resize";
+import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-bib";
 
 const $ = (id) => document.getElementById(id);
 const selection = createSelection();
@@ -21,12 +22,12 @@ function refreshControls() {
   const total = pairCount(selection);
   const kept = selection.left.concat(selection.right).filter((entry) => !entry.excluded).length;
   $("pairCounter").textContent = `${total ? selection.index + 1 : 0} / ${total}`;
-  $("keptCount").textContent = `${kept} da salvare`;
+  $("keptCount").textContent = t("{count} da salvare", { count: kept });
   $("previousPair").disabled = busy || selection.index === 0;
   $("nextPair").disabled = busy || selection.index >= total - 1;
   $("undoSelection").disabled = busy || !selection.history.length;
   $("saveSelection").disabled = busy || !kept;
-  $("saveLabel").textContent = busy ? "Salvataggio…" : "Salva immagini";
+  $("saveLabel").textContent = t(busy ? "Salvataggio…" : "Salva immagini");
   $("imageFormat").disabled = busy;
   $("saveDestination").disabled = busy;
   $("selectionHandle").tabIndex = total && !busy ? 0 : -1;
@@ -37,7 +38,7 @@ function refreshControls() {
     const collection = selection[side];
     const entry = collection[selection.index];
     const title = side === "left" ? "Left" : "Right";
-    $(side + "Count").textContent = `${collection.length} ${collection.length === 1 ? "immagine" : "immagini"}`;
+    $(side + "Count").textContent = t(collection.length === 1 ? "{count} immagine" : "{count} immagini", { count: collection.length });
     $("remove" + title).disabled = busy || !entry || entry.excluded;
   }
 }
@@ -56,12 +57,12 @@ function emptyLabel(side, message) {
     use.setAttribute("href", "#i-folder");
     icon.append(use);
     const title = document.createElement("strong");
-    title.textContent = side === "left" ? "Sinistra" : "Destra";
+    title.textContent = t(side === "left" ? "Sinistra" : "Destra");
     const text = document.createElement("span");
-    text.textContent = "Carica immagini o una cartella";
+    text.textContent = t("Carica immagini o una cartella");
     content.append(icon, title, text);
     element.append(content);
-  } else element.textContent = message;
+  } else element.textContent = t(message);
   element.hidden = !message;
 }
 
@@ -70,7 +71,7 @@ function decode(file) {
     const image = new Image();
     const url = URL.createObjectURL(file);
     image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
-    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Impossibile leggere “${file.name}”.`)); };
+    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error(t("Impossibile leggere “{name}”.", { name: file.name }))); };
     image.src = url;
   });
 }
@@ -144,7 +145,7 @@ for (const side of ["left", "right"]) {
       const files = Array.from(event.target.files);
       const count = importFiles(selection, side, files);
       event.target.value = "";
-      if (!count) { alert("Nessuna immagine trovata nella selezione."); return; }
+      if (!count) { alert(t("Nessuna immagine trovata nella selezione.")); return; }
       slider = 0.5;
       dirty = true;
       renderPair();
@@ -209,13 +210,13 @@ async function convert(file, format) {
   output.width = image.naturalWidth;
   output.height = image.naturalHeight;
   const ctx = output.getContext("2d");
-  if (!ctx || !output.width || !output.height) throw new Error(`Dimensioni non supportate: ${file.name}`);
+  if (!ctx || !output.width || !output.height) throw new Error(t("Dimensioni non supportate: {name}", { name: file.name }));
   if (format === "jpg") { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, output.width, output.height); }
   ctx.drawImage(image, 0, 0);
   try {
     return await new Promise((resolve, reject) => output.toBlob((blob) => {
       if (blob && blob.type === (format === "jpg" ? "image/jpeg" : "image/png")) resolve(blob);
-      else reject(new Error(`Conversione non riuscita: ${file.name}`));
+      else reject(new Error(t("Conversione non riuscita: {name}", { name: file.name })));
     }, format === "jpg" ? "image/jpeg" : "image/png", 0.95));
   } finally { output.width = output.height = 0; }
 }
@@ -253,7 +254,7 @@ $("saveSelection").addEventListener("click", async () => {
     if (folder) for await (const name of folder.keys()) occupied.add(name.toLowerCase());
     const zip = folder ? null : new ImageZip();
     for (const entry of entries) {
-      $("saveLabel").textContent = `Salvataggio ${completed + 1} / ${entries.length}`;
+      $("saveLabel").textContent = t("Salvataggio {current} / {total}", { current: completed + 1, total: entries.length });
       const blob = await convert(entry.file, format);
       if (folder) {
         await writeFolderImage(folder, entry.name, blob, occupied);
@@ -264,7 +265,7 @@ $("saveSelection").addEventListener("click", async () => {
     dirty = false;
   } catch (error) {
     if (error.name !== "AbortError" || completed) {
-      alert(`${error.message} ${inFolder ? `${completed} di ${entries.length} immagini salvate.` : "Lo ZIP non è stato scaricato."} La selezione è conservata: puoi correggere e riprovare.`);
+      alert(`${t(error.message)} ${inFolder ? t("{count} di {total} immagini salvate.", { count: completed, total: entries.length }) : t("Lo ZIP non è stato scaricato.")} ${t("La selezione è conservata: puoi correggere e riprovare.")}`);
     }
   } finally { busy = false; refreshControls(); }
 });
@@ -277,3 +278,8 @@ document.addEventListener("workspace:modechange", (event) => {
   if (event.detail.mode === "selezione") renderPair();
 });
 if (isModeActive("selezione")) renderPair();
+
+document.addEventListener("bib:languagechange", () => {
+  refreshControls();
+  if (isModeActive("selezione")) renderPair();
+});

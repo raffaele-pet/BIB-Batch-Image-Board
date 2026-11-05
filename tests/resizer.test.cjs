@@ -28,6 +28,7 @@ function loadEditor(modeActive = true) {
   const revoked = [];
   const sandbox = {
     isModeActive: () => modeActive,
+    t: (key, values = {}) => key.replace(/\{(\w+)\}/g, (_, name) => values[name] ?? `{${name}}`),
     setModeBusy() {},
     document: {
       addEventListener() {},

@@ -1,4 +1,5 @@
-import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-resize";
+import { t } from "./i18n.js?v=20261106-bib";
+import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-bib";
 
 // Editing/export engine ported from raffaele-pet/batch-image-resizer @ 90578aec62b8a62a86da868935547d655bb55859.
 (() => {
@@ -147,7 +148,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
     buildThumbnails();
     updateUI();
     scheduleDraw();
-    toast("Ultima modifica annullata.");
+    toast(t("Ultima modifica annullata."));
   }
 
   function clamp(v, min, max) {
@@ -258,7 +259,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
       image.decoding = "async";
       await new Promise((resolve, reject) => {
         image.onload = resolve;
-        image.onerror = () => reject(new Error(`Impossibile leggere ${file.name}`));
+        image.onerror = () => reject(new Error(t("Impossibile leggere {name}", { name: file.name })));
         image.src = url;
       });
 
@@ -284,7 +285,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
   async function addFiles(fileList) {
     const files = Array.from(fileList || []).filter(f => f.type.startsWith("image/"));
     if (!files.length) {
-      toast("Nessuna immagine valida selezionata.");
+      toast(t("Nessuna immagine valida selezionata."));
       return;
     }
 
@@ -294,7 +295,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
         loaded.push(await loadImageFile(file));
       } catch (err) {
         console.error(err);
-        toast(`Immagine ignorata: ${file.name}`);
+        toast(t("Immagine ignorata: {name}", { name: file.name }));
       }
     }
 
@@ -312,7 +313,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
     fitView();
     updateUI();
     scheduleDraw();
-    toast(`${loaded.length} ${loaded.length === 1 ? "immagine caricata" : "immagini caricate"}.`);
+    toast(t(loaded.length === 1 ? "{count} immagine caricata." : "{count} immagini caricate.", { count: loaded.length }));
   }
 
   function removeCurrent() {
@@ -1037,7 +1038,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
 
   function updateUI() {
     setModeBusy("ridimensiona", state.exporting);
-    if (!state.exporting) els.exportStatus.textContent = "Esporta ZIP";
+    if (!state.exporting) els.exportStatus.textContent = t("Esporta ZIP");
     const item = currentItem();
     const has = Boolean(item);
     const count = state.items.length;
@@ -1056,7 +1057,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
 
     els.counterLabel.textContent = count
       ? `${state.currentIndex + 1} / ${count}`
-      : "0 immagini";
+      : t("{count} immagini", { count: 0 });
 
     if (!item) {
       els.currentName.textContent = "—";
@@ -1106,7 +1107,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
 
     return new Promise((resolve, reject) => {
       canvas.toBlob(
-        blob => blob ? resolve(blob) : reject(new Error("Impossibile creare il file immagine.")),
+        blob => blob ? resolve(blob) : reject(new Error(t("Impossibile creare il file immagine."))),
         mime,
         format === "png" ? undefined : quality
       );
@@ -1260,7 +1261,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
     try {
       const entries = [];
       for (const { item, index } of itemsWithIndices) {
-        setExportStatus(`Preparazione ZIP ${done + 1} / ${total}…`);
+        setExportStatus(t("Preparazione ZIP {current} / {total}…", { current: done + 1, total }));
         const canvas = buildExportCanvas(item);
         const blob = await canvasToBlob(canvas);
         entries.push({ name: outputFileName(item, index), blob });
@@ -1268,15 +1269,15 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
         await new Promise(resolve => setTimeout(resolve, 20));
       }
 
-      setExportStatus("Creazione ZIP…");
+      setExportStatus(t("Creazione ZIP…"));
       const zip = await createZip(entries);
       downloadBlob(zip, zipFileName());
-      setExportStatus(`${done} ${done === 1 ? "immagine aggiunta" : "immagini aggiunte"} allo ZIP`, "good");
-      toast(`Esportazione completata: ${done} ${done === 1 ? "immagine" : "immagini"}.`);
+      setExportStatus(t(done === 1 ? "{count} immagine aggiunta allo ZIP" : "{count} immagini aggiunte allo ZIP", { count: done }), "good");
+      toast(t(done === 1 ? "Esportazione completata: {count} immagine." : "Esportazione completata: {count} immagini.", { count: done }));
     } catch (err) {
       console.error(err);
-      setExportStatus(err.message || "Errore durante l’esportazione", "bad");
-      toast(err.message || "Esportazione interrotta.");
+      setExportStatus(err.message || t("Errore durante l’esportazione"), "bad");
+      toast(err.message || t("Esportazione interrotta."));
     } finally {
       state.exporting = false;
       updateUI();
@@ -1453,6 +1454,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-
     urls.forEach(url => URL.revokeObjectURL(url));
   });
 
+  document.addEventListener("bib:languagechange", updateUI);
   resizeCanvas();
   updateUI();
   draw();

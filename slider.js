@@ -1,5 +1,6 @@
+import { t } from "./i18n.js?v=20261106-bib";
 import { updateThumbnail } from "./workspace-ui.js";
-import { setModeBusy } from "./workspace-navigation.js?v=20261105-resize";
+import { setModeBusy } from "./workspace-navigation.js?v=20261106-bib";
 
 const stage = document.getElementById("stage");
 const canvas = document.getElementById("viewer");
@@ -79,7 +80,7 @@ function setReadyState() {
   });
   document.querySelectorAll("[data-slider-pick]").forEach((button) => { button.disabled = state.recording; });
   setModeBusy("confronto", state.recording);
-  document.getElementById("recordLabel").textContent = state.recording ? "Registrazione in corso…" : "Registra video";
+  document.getElementById("recordLabel").textContent = t(state.recording ? "Registrazione in corso…" : "Registra video");
   stage.classList.toggle("has-before", Boolean(state.before));
   stage.classList.toggle("has-after", Boolean(state.after));
 }
@@ -152,7 +153,7 @@ function loadImage(file) {
 
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Impossibile leggere questa immagine."));
+      reject(new Error(t("Impossibile leggere questa immagine.")));
     };
 
     image.src = url;
@@ -504,14 +505,14 @@ async function record() {
   }
 
   if (typeof MediaRecorder === "undefined") {
-    alert("La registrazione non è supportata da questo browser.");
+    alert(t("La registrazione non è supportata da questo browser."));
     return;
   }
 
   const format = formatSelect.value;
   const recorderSettings = selectRecorderSettings(format);
   if (!recorderSettings) {
-    alert(`${format.toUpperCase()} non è supportato da questo browser. Scegli un altro formato.`);
+    alert(t("{format} non è supportato da questo browser. Scegli un altro formato.", { format: format.toUpperCase() }));
     return;
   }
 
@@ -520,7 +521,7 @@ async function record() {
   recordingCanvas.height = EXPORT_SIZE;
 
   if (!recordingCanvas.captureStream) {
-    alert("La registrazione non è supportata da questo browser.");
+    alert(t("La registrazione non è supportata da questo browser."));
     return;
   }
 
@@ -545,7 +546,7 @@ async function record() {
     });
   } catch (error) {
     stream.getTracks().forEach((track) => track.stop());
-    alert("Impossibile avviare la registrazione nel formato selezionato.");
+    alert(t("Impossibile avviare la registrazione nel formato selezionato."));
     return;
   }
 
@@ -579,7 +580,7 @@ async function record() {
     if (!recorderFailed && blob.size) {
       downloadBlob(blob, recorderSettings.extension, requestedName);
     } else if (!recorderFailed) {
-      alert("La registrazione non ha prodotto un video. Riprova.");
+      alert(t("La registrazione non ha prodotto un video. Riprova."));
     }
 
     restoreRecordingState();
@@ -588,7 +589,7 @@ async function record() {
   recorder.onerror = () => {
     recorderFailed = true;
     state.cancelRecordingAnimation?.();
-    alert("Si è verificato un errore durante la registrazione.");
+    alert(t("Si è verificato un errore durante la registrazione."));
   };
 
   try {
@@ -608,7 +609,7 @@ async function record() {
       restoreRecordingState();
     }
 
-    alert("Impossibile completare la registrazione del video.");
+    alert(t("Impossibile completare la registrazione del video."));
   }
 }
 
@@ -650,3 +651,5 @@ new ResizeObserver(resizeCanvas).observe(stage);
 setReadyState();
 updateViewInputs();
 resizeCanvas();
+
+document.addEventListener("bib:languagechange", setReadyState);

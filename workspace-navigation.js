@@ -1,3 +1,4 @@
+import { t } from "./i18n.js?v=20261106-bib";
 const modes = {
   confronto: { app: "sliderApp", link: "sliderMode", title: "Confronto immagini", short: "Confronto", description: "Due immagini, ogni dettaglio. Confronta e crea un prima e dopo." },
   selezione: { app: "selectionApp", link: "selectionMode", title: "Selezione immagini", short: "Selezione", description: "Confronta le tue raccolte e conserva le immagini che preferisci." },
@@ -25,9 +26,9 @@ function showMode(mode) {
     if (key === mode) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   }
-  document.getElementById("workspaceTitle").textContent = modes[mode].title;
-  document.getElementById("workspaceDescription").textContent = modes[mode].description;
-  document.title = `${modes[mode].short} — Batch Studio`;
+  document.getElementById("workspaceTitle").textContent = t(modes[mode].title);
+  document.getElementById("workspaceDescription").textContent = t(modes[mode].description);
+  document.title = `${t(modes[mode].short)} — BIB`;
   document.dispatchEvent(new CustomEvent("workspace:modechange", { detail: { mode } }));
   return true;
 }
@@ -44,3 +45,10 @@ window.addEventListener("hashchange", () => {
   if (!showMode(mode)) history.replaceState(null, "", `#${currentMode}`);
 });
 showMode(modes[location.hash.slice(1)] ? location.hash.slice(1) : "confronto");
+
+document.addEventListener("bib:languagechange", () => {
+  const mode = modes[currentMode];
+  document.getElementById("workspaceTitle").textContent = t(mode.title);
+  document.getElementById("workspaceDescription").textContent = t(mode.description);
+  document.title = `${t(mode.short)} — BIB`;
+});
