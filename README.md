@@ -1,6 +1,8 @@
 # Before After Slider
 
-A browser-local web app with two modes, selected using the header buttons. Images never leave your browser.
+A browser-local web app with two modes, selected using the header navigation. Images never leave your browser.
+
+Both modes share one responsive workspace: the same header, preview dimensions, right-hand inspector, source cards, fields, and export area. On smaller screens the inspector moves below the preview. Navigation between `#confronto` and `#selezione` keeps loaded images and selections in memory. All interface labels are in Italian.
 
 ## Before / After
 
@@ -35,4 +37,4 @@ Use the published version at:
 
 https://raffaele-pet.github.io/before-after-slider/
 
-The application is contained in a single HTML file. Open `index.html` in a browser or serve it through a local HTTP server.
+Serve the repository through a local HTTP server (JavaScript modules require HTTP). `index.html` defines the shared workspace, `workspace.css` contains its design system, and `slider.js` and `selection.js` implement the two modes. `workspace-ui.js` provides shared thumbnail rendering.

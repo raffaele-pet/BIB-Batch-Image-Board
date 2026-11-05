@@ -1,6 +1,7 @@
 import { createSelection, pairCount, importFiles, excludeImage, undoExclusion, navigate, exportEntries } from "./selection-model.js";
 import { ImageZip } from "./selection-zip.js";
 import { writeFolderImage } from "./selection-folder.js";
+import { updateThumbnail } from "./workspace-ui.js";
 
 const $ = (id) => document.getElementById(id);
 const selection = createSelection();
@@ -23,16 +24,29 @@ function status(message, error = false) {
 }
 
 function setMode(next) {
-  if (busy || document.querySelector(".recording")) return;
+  if (busy || document.querySelector(".recording")) return false;
   active = next;
   $("sliderApp").hidden = next;
-  document.querySelector(".record-controls").hidden = next;
   app.hidden = !next;
-  modeButtons.forEach((button, i) => button.setAttribute("aria-pressed", String(Boolean(i) === next)));
+  modeButtons.forEach((button, i) => {
+    if (Boolean(i) === next) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+  $("workspaceTitle").textContent = next ? "Selezione immagini" : "Confronto immagini";
+  $("workspaceDescription").textContent = next ? "Confronta le tue raccolte e conserva le immagini che preferisci." :
+    "Due immagini, ogni dettaglio. Confronta e crea un prima e dopo.";
+  document.title = `${next ? "Selezione" : "Confronto"} — Before / After`;
   if (next) renderPair();
+  return true;
 }
-modeButtons[0].addEventListener("click", () => setMode(false));
-modeButtons[1].addEventListener("click", () => setMode(true));
+modeButtons.forEach((link, i) => link.addEventListener("click", (event) => {
+  event.preventDefault();
+  if (setMode(Boolean(i))) history.replaceState(null, "", link.getAttribute("href"));
+}));
+window.addEventListener("hashchange", () => {
+  if (!["#selezione", "#confronto"].includes(location.hash)) return;
+  if (!setMode(location.hash === "#selezione")) history.replaceState(null, "", active ? "#selezione" : "#confronto");
+});
 
 function refreshControls() {
   const total = pairCount(selection);
@@ -45,7 +59,9 @@ function refreshControls() {
   $("saveSelection").disabled = busy || !kept;
   $("imageFormat").disabled = busy;
   $("saveDestination").disabled = busy;
-  modeButtons.forEach((button) => { button.disabled = busy; });
+  $("selectionHandle").tabIndex = total && !busy ? 0 : -1;
+  $("selectionHandle").setAttribute("aria-disabled", String(busy || !total));
+  modeButtons.forEach((button) => { button.setAttribute("aria-disabled", String(busy)); });
   app.querySelectorAll("[data-pick], input[type=file]").forEach((input) => { input.disabled = busy; });
   for (const side of ["left", "right"]) {
     const collection = selection[side];
@@ -53,7 +69,7 @@ function refreshControls() {
     const title = side === "left" ? "Left" : "Right";
     $(side + "Count").textContent = `${collection.length} immagini`;
     $("remove" + title).disabled = busy || !entry || entry.excluded;
-    const name = entry ? (entry.file.webkitRelativePath || entry.file.name) + (entry.excluded ? " · esclusa" : "") : "—";
+    const name = entry ? (entry.file.webkitRelativePath || entry.file.name) + (entry.excluded ? " · esclusa" : "") : "Nessuna immagine";
     $(side + "Name").textContent = name;
     $(side + "Name").title = name;
   }
@@ -61,7 +77,24 @@ function refreshControls() {
 
 function emptyLabel(side, message) {
   const element = $(side + "Empty");
-  element.textContent = message;
+  if (message === "initial") {
+    // Keep the same empty-state structure as the comparison workspace.
+    element.replaceChildren();
+    const content = document.createElement("div");
+    content.className = "empty-content";
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("class", "empty-icon");
+    icon.setAttribute("aria-hidden", "true");
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "#i-folder");
+    icon.append(use);
+    const title = document.createElement("strong");
+    title.textContent = side === "left" ? "Sinistra" : "Destra";
+    const text = document.createElement("span");
+    text.textContent = "Carica immagini o una cartella";
+    content.append(icon, title, text);
+    element.append(content);
+  } else element.textContent = message;
   element.hidden = !message;
 }
 
@@ -78,10 +111,12 @@ function decode(file) {
 async function renderPair() {
   const version = ++renderVersion;
   previews = { left: null, right: null };
+  stage.classList.toggle("has-images", Boolean(pairCount(selection)));
   refreshControls();
   for (const side of ["left", "right"]) {
+    updateThumbnail(side + "Thumb", null);
     const entry = selection[side][selection.index];
-    emptyLabel(side, !entry ? (selection[side].length ? "Nessuna immagine in questa posizione" : `Carica immagini o una cartella a ${side === "left" ? "sinistra" : "destra"}`) :
+    emptyLabel(side, !entry ? (selection[side].length ? "Nessuna immagine in questa posizione" : "initial") :
       entry.excluded ? "Immagine esclusa · Ctrl+Z per ripristinare" : "Caricamento…");
   }
   draw();
@@ -92,6 +127,7 @@ async function renderPair() {
       const image = await decode(entry.file);
       if (version !== renderVersion) return;
       previews[side] = image;
+      updateThumbnail(side + "Thumb", image);
       emptyLabel(side, "");
     } catch (error) {
       if (version !== renderVersion) return;
@@ -276,3 +312,4 @@ window.addEventListener("beforeunload", (event) => {
   if (dirty || busy) { event.preventDefault(); event.returnValue = ""; }
 });
 refreshControls();
+setMode(location.hash === "#selezione");
