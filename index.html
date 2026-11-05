@@ -7,7 +7,7 @@
   <meta name="description" content="Strumenti batch per le tue immagini. Confronta, seleziona, ridimensiona ed esporta direttamente nel browser.">
   <title>BIB — Batch Image Board</title>
   <link rel="icon" href="favicon.svg?v=20261105-clean" type="image/svg+xml">
-  <link rel="stylesheet" href="workspace.css?v=20261106-bib">
+  <link rel="stylesheet" href="workspace.css?v=20261106-header">
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -36,12 +36,15 @@
       <a id="resizeMode" href="#ridimensiona" aria-controls="resizeApp"><svg class="icon" aria-hidden="true"><use href="#i-resize"/></svg>Ridimensiona</a>
       <a id="sliderMode" href="#confronto" aria-current="page" aria-controls="sliderApp"><svg class="icon" aria-hidden="true"><use href="#i-compare"/></svg>Confronto</a>
       <a id="selectionMode" href="#selezione" aria-controls="selectionApp"><svg class="icon" aria-hidden="true"><use href="#i-select"/></svg>Seleziona</a>
-      <div class="language-controls">
-        <button type="button" class="language-button" data-language="en" aria-label="English" title="English" aria-pressed="false"><svg viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#21468b"/><path d="m0 0 60 40M60 0 0 40" stroke="white" stroke-width="9"/><path d="m0 0 60 40M60 0 0 40" stroke="#c8102e" stroke-width="4"/><path d="M30 0v40M0 20h60" stroke="white" stroke-width="14"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="8"/></svg></button>
-        <button type="button" class="language-button" data-language="it" aria-label="Italiano" title="Italiano" aria-pressed="true"><svg viewBox="0 0 60 40" aria-hidden="true"><path fill="#009246" d="M0 0h20v40H0z"/><path fill="white" d="M20 0h20v40H20z"/><path fill="#ce2b37" d="M40 0h20v40H40z"/></svg></button>
-      </div>
+
     </nav>
+    <div class="header-utilities">
+      <div class="language-controls">
+        <button type="button" class="language-button" data-language="en" aria-label="English" title="English" aria-pressed="true"><svg viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#21468b"/><path d="m0 0 60 40M60 0 0 40" stroke="white" stroke-width="9"/><path d="m0 0 60 40M60 0 0 40" stroke="#c8102e" stroke-width="4"/><path d="M30 0v40M0 20h60" stroke="white" stroke-width="14"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="8"/></svg></button>
+        <button type="button" class="language-button" data-language="it" aria-label="Italiano" title="Italiano" aria-pressed="false"><svg viewBox="0 0 60 40" aria-hidden="true"><path fill="#009246" d="M0 0h20v40H0z"/><path fill="white" d="M20 0h20v40H20z"/><path fill="#ce2b37" d="M40 0h20v40H40z"/></svg></button>
+      </div>
     <div class="local-badge"><span class="status-dot"></span>Elaborazione locale. Nessun caricamento online.</div>
+    </div>
   </header>
 
   <main id="workspace" class="workspace-shell" tabindex="-1">
@@ -193,8 +196,8 @@
       <div id="resize-toast" class="resize-toast" role="status" aria-live="polite"></div>
     </section>
   </main>
-  <script type="module" src="slider.js?v=20261106-bib"></script>
-  <script type="module" src="selection.js?v=20261106-bib"></script>
-  <script type="module" src="resizer.js?v=20261106-bib"></script>
+  <script type="module" src="slider.js?v=20261106-header"></script>
+  <script type="module" src="selection.js?v=20261106-header"></script>
+  <script type="module" src="resizer.js?v=20261106-header"></script>
 </body>
 </html>

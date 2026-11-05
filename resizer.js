@@ -1,5 +1,5 @@
-import { t } from "./i18n.js?v=20261106-bib";
-import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-bib";
+import { t } from "./i18n.js?v=20261106-header";
+import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-header";
 
 // Editing/export engine ported from raffaele-pet/batch-image-resizer @ 90578aec62b8a62a86da868935547d655bb55859.
 (() => {

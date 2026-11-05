@@ -1,6 +1,6 @@
-import { t } from "./i18n.js?v=20261106-bib";
+import { t } from "./i18n.js?v=20261106-header";
 import { updateThumbnail } from "./workspace-ui.js";
-import { setModeBusy } from "./workspace-navigation.js?v=20261106-bib";
+import { setModeBusy } from "./workspace-navigation.js?v=20261106-header";
 
 const stage = document.getElementById("stage");
 const canvas = document.getElementById("viewer");

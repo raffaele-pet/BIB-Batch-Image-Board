@@ -1,4 +1,4 @@
-import { t } from "./i18n.js?v=20261106-bib";
+import { t } from "./i18n.js?v=20261106-header";
 const modes = {
   confronto: { app: "sliderApp", link: "sliderMode", title: "Confronto immagini", short: "Confronto", description: "Due immagini, ogni dettaglio. Confronta e crea un prima e dopo." },
   selezione: { app: "selectionApp", link: "selectionMode", title: "Selezione immagini", short: "Selezione", description: "Confronta le tue raccolte e conserva le immagini che preferisci." },

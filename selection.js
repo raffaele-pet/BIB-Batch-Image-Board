@@ -1,9 +1,9 @@
-import { t } from "./i18n.js?v=20261106-bib";
+import { t } from "./i18n.js?v=20261106-header";
 import { createSelection, pairCount, importFiles, excludeImage, undoExclusion, navigate, exportEntries } from "./selection-model.js";
 import { ImageZip } from "./selection-zip.js";
 import { writeFolderImage } from "./selection-folder.js";
 import { updateThumbnail } from "./workspace-ui.js";
-import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-bib";
+import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-header";
 
 const $ = (id) => document.getElementById(id);
 const selection = createSelection();

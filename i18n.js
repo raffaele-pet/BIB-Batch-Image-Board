@@ -49,8 +49,8 @@ const english = {
   "{count} di {total} immagini salvate.":"{count} of {total} images saved.", "Lo ZIP non è stato scaricato.":"The ZIP was not downloaded.", "La selezione è conservata: puoi correggere e riprovare.":"Your selection is preserved. You can fix the issue and retry.",
   "Archivio troppo grande per ZIP. Usa il salvataggio in cartella.":"Archive too large for ZIP. Use folder export.", "Archivio troppo grande. Usa il salvataggio in cartella.":"Archive too large. Use folder export."
 };
-let language = "it";
-try { language = localStorage.getItem("bib-language") === "en" ? "en" : "it"; } catch {}
+let language = "en";
+try { language = localStorage.getItem("bib-language") === "it" ? "it" : "en"; } catch {}
 export function t(key, values = {}) {
   const text = language === "en" ? english[key] || key : key;
   return text.replace(/\{(\w+)\}/g, (match, key) => String(values[key] ?? match));
