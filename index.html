@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101215">
-  <meta name="description" content="Strumenti batch per le tue immagini. Confronta, seleziona ed esporta direttamente nel browser.">
+  <meta name="description" content="Strumenti batch per le tue immagini. Confronta, seleziona, ridimensiona ed esporta direttamente nel browser.">
   <title>Batch Studio — Strumenti per immagini</title>
   <link rel="icon" href="favicon.svg?v=20261105-clean" type="image/svg+xml">
-  <link rel="stylesheet" href="workspace.css?v=20261105-viewer">
+  <link rel="stylesheet" href="workspace.css?v=20261105-resize">
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -23,6 +23,7 @@
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
     <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3m12-6 3 3-3 3"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-resize" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 16 16 8m-5 0h5v5M8 11v5h5"/></symbol>
   </svg>
 
   <a class="skip-link" href="#workspace">Vai all’area di lavoro</a>
@@ -34,6 +35,7 @@
     <nav class="mode-navigation" aria-label="Modalità di lavoro">
       <a id="sliderMode" href="#confronto" aria-current="page" aria-controls="sliderApp"><svg class="icon" aria-hidden="true"><use href="#i-compare"/></svg>Confronto</a>
       <a id="selectionMode" href="#selezione" aria-controls="selectionApp"><svg class="icon" aria-hidden="true"><use href="#i-select"/></svg>Selezione</a>
+      <a id="resizeMode" href="#ridimensiona" aria-controls="resizeApp"><svg class="icon" aria-hidden="true"><use href="#i-resize"/></svg>Ridimensiona</a>
     </nav>
     <div class="local-badge"><span class="status-dot"></span>Elaborazione locale. Nessun caricamento online.</div>
   </header>
@@ -119,8 +121,76 @@
         </section>
       </aside>
     </section>
+    <section id="resizeApp" class="workbench" aria-label="Ridimensionamento immagini" hidden>
+      <div class="viewer-column">
+        <div class="viewer-panel">
+          <div class="viewer-heading"><h2><svg class="icon" aria-hidden="true"><use href="#i-resize"/></svg>Anteprima</h2><span class="quiet-tag">COMPOSIZIONE</span></div>
+          <div id="resize-stageWrap" class="resize-stage">
+            <canvas id="resize-stageCanvas" tabindex="0" aria-label="Area di ridimensionamento immagini"></canvas>
+            <div id="resize-emptyState" class="resize-empty-state"><div class="empty-content"><svg class="empty-icon" aria-hidden="true"><use href="#i-image"/></svg><strong>Immagini da ridimensionare</strong><span>Carica le immagini o trascinale qui</span></div></div>
+            <div id="resize-dropOverlay" class="resize-drop-overlay">Rilascia le immagini qui</div>
+          </div>
+        </div>
+      </div>
+      <aside class="inspector" aria-label="Strumenti di ridimensionamento">
+        <div class="inspector-title"><svg class="icon" aria-hidden="true"><use href="#i-resize"/></svg><h2>Strumenti di ridimensionamento</h2></div>
+        <div class="inspector-body">
+          <section class="inspector-section resize-library-section">
+            <div class="section-heading"><h3>Raccolta</h3><span id="resize-counterLabel" class="section-meta" aria-live="polite">0 immagini</span></div>
+            <input id="resize-fileInput" class="file-input" type="file" accept="image/*" multiple tabindex="-1" aria-label="Aggiungi immagini da ridimensionare">
+            <button id="resize-addImagesBtn" class="button source-upload" type="button"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>Aggiungi immagini</button>
+            <div id="resize-thumbStrip" class="resize-thumb-strip" aria-label="Sequenza di immagini"></div>
+            <div class="resize-navigation">
+              <button id="resize-prevBtn" class="button icon-button" type="button" disabled aria-label="Immagine precedente"><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+              <button id="resize-removeBtn" class="button" type="button" disabled title="Rimuovi l’immagine dalla raccolta"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg>Rimuovi</button>
+              <button id="resize-nextBtn" class="button icon-button" type="button" disabled aria-label="Immagine successiva"><svg class="icon flip-icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+            </div>
+            <button id="resize-undoBtn" class="button undo-button" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>Annulla modifica<kbd>Ctrl Z</kbd></button>
+          </section>
+          <section class="inspector-section">
+            <h3>Area di lavoro</h3>
+            <div class="field-grid">
+              <label class="field">Proporzioni<select id="resize-ratioSelect" title="Proporzioni dell’area di lavoro"><option value="original" selected>Originali</option><option value="1:1">1:1</option><option value="4:5">4:5</option><option value="5:4">5:4</option><option value="3:4">3:4</option><option value="4:3">4:3</option><option value="2:3">2:3</option><option value="3:2">3:2</option><option value="9:16">9:16</option><option value="16:9">16:9</option><option value="21:9">21:9</option></select></label>
+              <label class="field">Lato lungo<select id="resize-sizeSelect" title="Dimensione del lato lungo in uscita"><option value="adaptive" selected>Adattivo</option><option value="1024">1K · 1024</option><option value="2048">2K · 2048</option><option value="4096">4K · 4096</option><option value="8192">8K · 8192</option></select></label>
+            </div>
+          </section>
+          <section class="inspector-section">
+            <h3>Composizione</h3>
+            <div class="resize-image-actions">
+              <button id="resize-fillBtn" class="button" type="button" disabled title="Riempi l’area di lavoro con l’immagine">Riempi</button>
+              <button id="resize-fitImageBtn" class="button" type="button" disabled title="Adatta l’intera immagine all’area di lavoro">Adatta</button>
+              <button id="resize-edgePixelBtn" class="button" type="button" disabled aria-pressed="false" title="Riempi i margini estendendo i pixel dei bordi">Edge pixel</button>
+              <button id="resize-centerBtn" class="button" type="button" disabled title="Centra l’immagine senza cambiare la scala">Centra</button>
+            </div>
+            <div class="resize-view-controls">
+              <button id="resize-zoomOutBtn" class="button icon-button" type="button" aria-label="Riduci zoom">−</button>
+              <button id="resize-fitViewBtn" class="button" type="button" title="Adatta la vista · Ctrl+0">Vista <span id="resize-viewScaleLabel">100%</span></button>
+              <button id="resize-zoomInBtn" class="button icon-button" type="button" aria-label="Aumenta zoom">+</button>
+            </div>
+            <dl class="resize-image-details">
+              <div><dt>Immagine</dt><dd id="resize-currentName">—</dd></div>
+              <div><dt>Originale</dt><dd id="resize-originalSize">—</dd></div>
+              <div><dt>Uscita</dt><dd id="resize-outputSize">—</dd></div>
+              <div><dt>Scala</dt><dd id="resize-imageScaleLabel">—</dd></div>
+            </dl>
+          </section>
+        </div>
+        <section class="inspector-section export-section">
+          <h3>Esporta immagini</h3>
+          <div class="field-grid">
+            <label class="field">Formato<select id="resize-formatSelect"><option value="jpeg" selected>JPG</option><option value="png">PNG</option><option value="webp">WebP</option></select></label>
+            <label class="field">Nomi dei file<select id="resize-namingSelect"><option value="original" selected>Originali</option><option value="sequence">Nome + sequenza</option></select></label>
+          </div>
+          <label id="resize-qualityRow" class="resize-quality-row">Qualità<input id="resize-qualityRange" type="range" min="50" max="100" step="1" value="95"><span id="resize-qualityValue">95</span></label>
+          <div id="resize-namingCustom" class="resize-custom-name hidden"><label class="field">Nome base<input id="resize-baseNameInput" type="text" value="image" placeholder="Nome base" autocomplete="off" spellcheck="false"></label></div>
+          <button id="resize-exportAllTopBtn" class="button button-primary" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="resize-exportStatus" aria-live="polite">Esporta ZIP</span></button>
+        </section>
+      </aside>
+      <div id="resize-toast" class="resize-toast" role="status" aria-live="polite"></div>
+    </section>
   </main>
-  <script type="module" src="slider.js?v=20261105-viewer"></script>
-  <script type="module" src="selection.js?v=20261105-viewer"></script>
+  <script type="module" src="slider.js?v=20261105-resize"></script>
+  <script type="module" src="selection.js?v=20261105-resize"></script>
+  <script type="module" src="resizer.js?v=20261105-resize"></script>
 </body>
 </html>

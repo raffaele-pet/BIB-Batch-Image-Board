@@ -2,6 +2,7 @@ import { createSelection, pairCount, importFiles, excludeImage, undoExclusion, n
 import { ImageZip } from "./selection-zip.js";
 import { writeFolderImage } from "./selection-folder.js";
 import { updateThumbnail } from "./workspace-ui.js";
+import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261105-resize";
 
 const $ = (id) => document.getElementById(id);
 const selection = createSelection();
@@ -9,39 +10,12 @@ const app = $("selectionApp");
 const stage = $("selectionStage");
 const canvas = $("selectionCanvas");
 const context = canvas.getContext("2d");
-const modeButtons = [$("sliderMode"), $("selectionMode")];
-let active = false;
 let busy = false;
 let dirty = false;
 let slider = 0.5;
 let renderVersion = 0;
 let previews = { left: null, right: null };
 let dragging = null;
-
-function setMode(next) {
-  if (busy || document.querySelector(".recording")) return false;
-  active = next;
-  $("sliderApp").hidden = next;
-  app.hidden = !next;
-  modeButtons.forEach((button, i) => {
-    if (Boolean(i) === next) button.setAttribute("aria-current", "page");
-    else button.removeAttribute("aria-current");
-  });
-  $("workspaceTitle").textContent = next ? "Selezione immagini" : "Confronto immagini";
-  $("workspaceDescription").textContent = next ? "Confronta le tue raccolte e conserva le immagini che preferisci." :
-    "Due immagini, ogni dettaglio. Confronta e crea un prima e dopo.";
-  document.title = `${next ? "Selezione" : "Confronto"} — Batch Studio`;
-  if (next) renderPair();
-  return true;
-}
-modeButtons.forEach((link, i) => link.addEventListener("click", (event) => {
-  event.preventDefault();
-  if (setMode(Boolean(i))) history.replaceState(null, "", link.getAttribute("href"));
-}));
-window.addEventListener("hashchange", () => {
-  if (!["#selezione", "#confronto"].includes(location.hash)) return;
-  if (!setMode(location.hash === "#selezione")) history.replaceState(null, "", active ? "#selezione" : "#confronto");
-});
 
 function refreshControls() {
   const total = pairCount(selection);
@@ -57,7 +31,7 @@ function refreshControls() {
   $("saveDestination").disabled = busy;
   $("selectionHandle").tabIndex = total && !busy ? 0 : -1;
   $("selectionHandle").setAttribute("aria-disabled", String(busy || !total));
-  modeButtons.forEach((button) => { button.setAttribute("aria-disabled", String(busy)); });
+  setModeBusy("selezione", busy);
   app.querySelectorAll("[data-pick], input[type=file]").forEach((input) => { input.disabled = busy; });
   for (const side of ["left", "right"]) {
     const collection = selection[side];
@@ -131,7 +105,7 @@ async function renderPair() {
 }
 
 function draw() {
-  if (!active) return;
+  if (!isModeActive("selezione")) return;
   const width = stage.clientWidth;
   const height = stage.clientHeight;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -200,7 +174,7 @@ $("previousPair").addEventListener("click", () => move(-1));
 $("nextPair").addEventListener("click", () => move(1));
 $("undoSelection").addEventListener("click", undo);
 document.addEventListener("keydown", (event) => {
-  if (!active || busy || event.target.closest("input, select, textarea, [contenteditable=true]")) return;
+  if (!isModeActive("selezione") || busy || event.target.closest("input, select, textarea, [contenteditable=true]")) return;
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z" && !event.shiftKey) {
     event.preventDefault(); undo();
   } else if (!event.ctrlKey && !event.metaKey && !event.altKey && event.target !== $("selectionHandle")) {
@@ -299,4 +273,7 @@ window.addEventListener("beforeunload", (event) => {
   if (dirty || busy) { event.preventDefault(); event.returnValue = ""; }
 });
 refreshControls();
-setMode(location.hash === "#selezione");
+document.addEventListener("workspace:modechange", (event) => {
+  if (event.detail.mode === "selezione") renderPair();
+});
+if (isModeActive("selezione")) renderPair();
