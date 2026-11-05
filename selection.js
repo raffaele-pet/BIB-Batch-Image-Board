@@ -65,9 +65,6 @@ function refreshControls() {
     const title = side === "left" ? "Left" : "Right";
     $(side + "Count").textContent = `${collection.length} ${collection.length === 1 ? "immagine" : "immagini"}`;
     $("remove" + title).disabled = busy || !entry || entry.excluded;
-    const name = entry ? (entry.file.webkitRelativePath || entry.file.name) + (entry.excluded ? " · esclusa" : "") : "Nessuna immagine";
-    $(side + "Name").textContent = name;
-    $(side + "Name").title = name;
   }
 }
 

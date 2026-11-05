@@ -77,11 +77,6 @@ h1 { font-size: 25px; font-weight: 580; letter-spacing: -.75px; line-height: 1.3
 .empty-content strong { color: #c2ccd9; font-size: 13px; font-weight: 500; }
 .empty-content span { color: #7f8c9e; font-size: 11px; max-width: 130px; line-height: 1.65; }
 .stage.has-before .before-guide, .stage.has-after .after-guide { visibility: hidden; }
-.viewer-files { min-height: 55px; flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border-soft); }
-.viewer-files > div { padding: 11px 20px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.viewer-files > div + div { border-left: 1px solid var(--border-soft); text-align: right; }
-.file-side { font-size: 9px; letter-spacing: 1.3px; color: #7f8c9e; font-weight: 600; }
-.viewer-files span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: #a5afbd; }
 .inspector { min-height: 0; overflow: hidden; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; display: flex; flex-direction: column; }
 .inspector-title { background: #1b2028; }
 .inspector-body { flex: 1; min-height: 100px; overflow: auto; scrollbar-width: thin; scrollbar-color: #3a4452 transparent; }
@@ -200,7 +195,6 @@ kbd { margin-left: auto; padding: 3px 5px; border: 1px solid #394252; border-rad
   .viewer-panel { flex: none; }
   .canvas-area { flex: none; height: min(80vw, 560px); min-height: 260px; padding: 14px; }
   .viewer-heading { height: 46px; min-height: 46px; padding-inline: 16px; }
-  .viewer-files > div { padding-inline: 16px; }
   .inspector { overflow: visible; flex: none; display: grid; grid-template-columns: 1fr 1fr; }
   .inspector-body { display: contents; }
   .inspector-title { grid-column: 1 / -1; }

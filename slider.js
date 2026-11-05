@@ -310,8 +310,6 @@ async function handleImageInput(event, slot) {
     state[slot] = await loadImage(file);
     document.getElementById(slot + "FileName").textContent = file.name;
     document.getElementById(slot + "FileName").title = file.name;
-    document.getElementById(slot + "Caption").textContent = file.name;
-    document.getElementById(slot + "Caption").title = file.name;
     updateThumbnail(slot + "Thumb", state[slot]);
     resetNavigation();
     setReadyState();
