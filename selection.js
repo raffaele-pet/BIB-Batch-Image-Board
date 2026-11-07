@@ -70,7 +70,7 @@ async function renderPair() {
   for (const side of ["left", "right"]) {
     updateThumbnail(side + "Thumb", null);
     const entry = selection[side][selection.index];
-    showEmptySide(side, !entry);
+    showEmptySide(side, !entry || entry.excluded);
   }
   draw();
   await Promise.all(["left", "right"].map(async (side) => {
@@ -137,6 +137,7 @@ for (const side of ["left", "right"]) {
   }
   $("remove" + (side === "left" ? "Left" : "Right")).addEventListener("click", () => {
     if (busy || !excludeImage(selection, side)) return;
+    slider = 0.5;
     dirty = true;
     renderPair();
   });
