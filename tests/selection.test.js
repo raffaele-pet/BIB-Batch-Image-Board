@@ -1,8 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createSelection, pairCount, importFiles, excludeImage, undoExclusion, navigate, exportEntries, uniqueName } from "../selection-model.js";
+import { createSelection, pairCount, importFiles, excludeImage, undoExclusion, navigate, exportEntries } from "../selection-model.js";
 import { ImageZip } from "../selection-zip.js";
-import { writeFolderImage } from "../selection-folder.js";
 
 const image = (name, webkitRelativePath = "") => ({ name, type: "image/png", webkitRelativePath });
 
@@ -25,7 +24,7 @@ test("unequal collections retain every image and navigation is bounded", () => {
   assert.equal(state.index, 2);
   navigate(state, -10);
   assert.equal(state.index, 0);
-  assert.deepEqual(exportEntries(state, "png").map((entry) => entry.name), ["0001_1.png", "0002_1.png", "0003_2.png", "0004_3.png"]);
+  assert.deepEqual(exportEntries(state, "png").map((entry) => entry.name), ["1.png", "1_2.png", "2.png", "3.png"]);
 });
 
 test("exclusion keeps the slot empty and undo returns to the original pair in LIFO order", () => {
@@ -61,17 +60,24 @@ test("replacing one source preserves valid undo for the other source", () => {
   assert.equal(state.left[0].file.name, "new.png");
 });
 
-test("exports preserve duplicate names and use valid, collision-free ordered names", () => {
+test("original ZIP names preserve both duplicates and existing numbered names", () => {
   const state = createSelection();
-  importFiles(state, "left", [image("same.png"), image('invalid:name.png')]);
-  importFiles(state, "right", [image("same.png")]);
-  const entries = exportEntries(state, "jpg");
-  assert.equal(new Set(entries.map((entry) => entry.name)).size, 3);
-  assert.equal(entries.filter((entry) => entry.file.name === "same.png").length, 2);
-  assert.ok(entries.every((entry) => !/[\\/:*?"<>|]/.test(entry.name)));
-  const occupied = new Set(["0001_same.jpg", "0001_same_2.jpg"]);
-  assert.equal(uniqueName("0001_same.jpg", occupied), "0001_same_3.jpg");
-  assert.equal(uniqueName("0001_SAME.jpg", occupied), "0001_SAME_4.jpg");
+  importFiles(state, "left", [image("same.png", "folder/1/same.png"), image("same_2.png", "folder/2/same_2.png")]);
+  importFiles(state, "right", [image("SAME.jpg")]);
+  assert.deepEqual(exportEntries(state, "jpg").map(({ name }) => name),
+    ["same.jpg", "SAME_3.jpg", "same_2.jpg"]);
+});
+
+test("custom ZIP names number retained images in pair order", () => {
+  const state = createSelection();
+  importFiles(state, "left", [image("left-1.png"), image("left-2.png")]);
+  importFiles(state, "right", [image("right-1.png"), image("right-2.png")]);
+  excludeImage(state, "left");
+  const entries = exportEntries(state, "jpg", " Work:edit ");
+  assert.deepEqual(entries.map(({ file }) => file.name),
+    ["right-1.png", "left-2.png", "right-2.png"]);
+  assert.deepEqual(entries.map(({ name }) => name),
+    ["Work-edit_001.jpg", "Work-edit_002.jpg", "Work-edit_003.jpg"]);
 });
 
 test("excluding both images exports nothing without losing navigation or undo", () => {
@@ -106,38 +112,4 @@ test("ZIP stores UTF-8 names, sizes, offsets, CRC and independent entries", asyn
   assert.equal(view.getUint32(central + 42, true), 0);
   const second = central + 46 + nameLength;
   assert.equal(view.getUint32(second + 42, true), 30 + nameLength + 9);
-});
-
-test("folder export commits new files and never overwrites an existing name", async () => {
-  const saved = new Map([["0001_image.png", "original"]]);
-  const folder = {
-    async getFileHandle(name, options) {
-      assert.equal(options.create, true);
-      return { async createWritable() {
-        let content;
-        return {
-          async write(blob) { content = await blob.text(); },
-          async close() { saved.set(name, content); },
-          async abort() { assert.fail("Successful write should not abort"); }
-        };
-      } };
-    }
-  };
-  const occupied = new Set(saved.keys());
-  assert.equal(await writeFolderImage(folder, "0001_image.png", new Blob(["new image"]), occupied), "0001_image_2.png");
-  assert.equal(saved.get("0001_image.png"), "original");
-  assert.equal(saved.get("0001_image_2.png"), "new image");
-});
-
-test("failed folder writes abort their stream and propagate the error", async () => {
-  let aborted = false;
-  let closed = false;
-  const folder = { async getFileHandle() { return { async createWritable() { return {
-    async write() { throw new Error("Disk full"); },
-    async close() { closed = true; },
-    async abort() { aborted = true; }
-  }; } }; } };
-  await assert.rejects(writeFolderImage(folder, "0001_image.png", new Blob(["image"]), new Set()), /Disk full/);
-  assert.equal(aborted, true);
-  assert.equal(closed, false);
 });

@@ -24,7 +24,7 @@ export class ImageZip {
   async add(name, blob) {
     const filename = new TextEncoder().encode(name);
     if (this.directory.length >= 65535 || this.offset + blob.size + filename.length + 30 > 0xffffffff) {
-      throw new Error("Archivio troppo grande per ZIP. Usa il salvataggio in cartella.");
+      throw new Error("Archivio troppo grande. Esporta meno immagini per volta.");
     }
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const crc = crc32(bytes);
@@ -56,7 +56,7 @@ export class ImageZip {
   toBlob() {
     const central = this.directory.flat();
     const size = central.reduce((sum, part) => sum + part.length, 0);
-    if (this.offset + size + 22 > 0xffffffff) throw new Error("Archivio troppo grande. Usa il salvataggio in cartella.");
+    if (this.offset + size + 22 > 0xffffffff) throw new Error("Archivio troppo grande. Esporta meno immagini per volta.");
     const end = header(22);
     end.u32(0, 0x06054b50);
     end.u16(8, this.directory.length);

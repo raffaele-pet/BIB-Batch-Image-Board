@@ -1,9 +1,8 @@
-import { t } from "./i18n.js?v=20261106-header";
-import { createSelection, pairCount, importFiles, excludeImage, undoExclusion, navigate, exportEntries } from "./selection-model.js";
-import { ImageZip } from "./selection-zip.js";
-import { writeFolderImage } from "./selection-folder.js";
+import { t } from "./i18n.js?v=20261107-home";
+import { createSelection, pairCount, importFiles, excludeImage, undoExclusion, navigate, exportEntries } from "./selection-model.js?v=20261107-home";
+import { ImageZip } from "./selection-zip.js?v=20261107-home";
 import { updateThumbnail } from "./workspace-ui.js";
-import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-header";
+import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261107-home";
 
 const $ = (id) => document.getElementById(id);
 const selection = createSelection();
@@ -27,9 +26,10 @@ function refreshControls() {
   $("nextPair").disabled = busy || selection.index >= total - 1;
   $("undoSelection").disabled = busy || !selection.history.length;
   $("saveSelection").disabled = busy || !kept;
-  $("saveLabel").textContent = t(busy ? "Salvataggio…" : "Salva immagini");
+  $("saveLabel").textContent = t(busy ? "Creazione ZIP…" : "Esporta ZIP");
   $("imageFormat").disabled = busy;
-  $("saveDestination").disabled = busy;
+  $("selectionNaming").disabled = busy;
+  $("selectionBaseName").disabled = busy;
   $("selectionHandle").tabIndex = total && !busy ? 0 : -1;
   $("selectionHandle").setAttribute("aria-disabled", String(busy || !total));
   setModeBusy("selezione", busy);
@@ -43,27 +43,13 @@ function refreshControls() {
   }
 }
 
-function emptyLabel(side, message) {
+function showEmptySide(side, showUpload, message = "") {
   const element = $(side + "Empty");
-  if (message === "initial") {
-    // Keep the same empty-state structure as the comparison workspace.
-    element.replaceChildren();
-    const content = document.createElement("div");
-    content.className = "empty-content";
-    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    icon.setAttribute("class", "empty-icon");
-    icon.setAttribute("aria-hidden", "true");
-    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-    use.setAttribute("href", "#i-folder");
-    icon.append(use);
-    const title = document.createElement("strong");
-    title.textContent = t(side === "left" ? "Sinistra" : "Destra");
-    const text = document.createElement("span");
-    text.textContent = t("Carica immagini o una cartella");
-    content.append(icon, title, text);
-    element.append(content);
-  } else element.textContent = t(message);
-  element.hidden = !message;
+  const error = element.querySelector(".selection-preview-error");
+  element.querySelector(".stage-import").hidden = !showUpload;
+  error.textContent = message;
+  error.hidden = !message;
+  element.hidden = !showUpload && !message;
 }
 
 function decode(file) {
@@ -84,8 +70,7 @@ async function renderPair() {
   for (const side of ["left", "right"]) {
     updateThumbnail(side + "Thumb", null);
     const entry = selection[side][selection.index];
-    emptyLabel(side, !entry ? (selection[side].length ? "Nessuna immagine in questa posizione" : "initial") :
-      entry.excluded ? "Immagine esclusa · Ctrl+Z per ripristinare" : "Caricamento…");
+    showEmptySide(side, !entry);
   }
   draw();
   await Promise.all(["left", "right"].map(async (side) => {
@@ -96,10 +81,9 @@ async function renderPair() {
       if (version !== renderVersion) return;
       previews[side] = image;
       updateThumbnail(side + "Thumb", image);
-      emptyLabel(side, "");
     } catch (error) {
       if (version !== renderVersion) return;
-      emptyLabel(side, error.message);
+      showEmptySide(side, false, error.message);
     }
     draw();
   }));
@@ -132,7 +116,7 @@ function draw() {
   }
   $("selectionDivider").style.left = `${slider * 100}%`;
   $("selectionHandle").setAttribute("aria-valuenow", String(Math.round(slider * 100)));
-  // Empty-side labels follow the reveal boundary, so an excluded side stays empty.
+  // Keep the upload controls within the visible portion of their side.
   $("leftEmpty").style.width = `${slider * 100}%`;
   $("rightEmpty").style.width = `${(1 - slider) * 100}%`;
 }
@@ -187,7 +171,7 @@ document.addEventListener("keydown", (event) => {
 
 function setSlider(value) { slider = Math.max(0, Math.min(1, value)); draw(); }
 stage.addEventListener("pointerdown", (event) => {
-  if (busy || event.button !== 0 || event.target.closest("button")) return;
+  if (busy || !pairCount(selection) || event.button !== 0 || event.target.closest("button")) return;
   dragging = event.pointerId;
   stage.setPointerCapture(event.pointerId);
   setSlider((event.clientX - stage.getBoundingClientRect().left) / stage.clientWidth);
@@ -232,41 +216,31 @@ function download(blob) {
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
-const folderSupported = typeof window.showDirectoryPicker === "function";
-if (!folderSupported) {
-  $("saveDestination").querySelector('[value="folder"]').disabled = true;
-  $("saveDestination").value = "zip";
-}
+$("selectionNaming").addEventListener("change", () => {
+  $("selectionNamingCustom").hidden = $("selectionNaming").value !== "sequence";
+});
 
 $("saveSelection").addEventListener("click", async () => {
   if (busy) return;
   const format = $("imageFormat").value;
-  const entries = exportEntries(selection, format);
+  const baseName = $("selectionNaming").value === "sequence" ? $("selectionBaseName").value : null;
+  const entries = exportEntries(selection, format, baseName);
   if (!entries.length) return;
-  const inFolder = $("saveDestination").value === "folder";
   let completed = 0;
   busy = true;
   refreshControls();
   try {
-    // Call the picker before any await to retain the browser's user activation.
-    const folder = inFolder ? await window.showDirectoryPicker({ mode: "readwrite", id: "selected-images" }) : null;
-    const occupied = new Set();
-    if (folder) for await (const name of folder.keys()) occupied.add(name.toLowerCase());
-    const zip = folder ? null : new ImageZip();
+    const zip = new ImageZip();
     for (const entry of entries) {
-      $("saveLabel").textContent = t("Salvataggio {current} / {total}", { current: completed + 1, total: entries.length });
+      $("saveLabel").textContent = t("Preparazione ZIP {current} / {total}…", { current: completed + 1, total: entries.length });
       const blob = await convert(entry.file, format);
-      if (folder) {
-        await writeFolderImage(folder, entry.name, blob, occupied);
-      } else await zip.add(entry.name, blob);
+      await zip.add(entry.name, blob);
       completed++;
     }
-    if (zip) download(zip.toBlob());
+    download(zip.toBlob());
     dirty = false;
   } catch (error) {
-    if (error.name !== "AbortError" || completed) {
-      alert(`${t(error.message)} ${inFolder ? t("{count} di {total} immagini salvate.", { count: completed, total: entries.length }) : t("Lo ZIP non è stato scaricato.")} ${t("La selezione è conservata: puoi correggere e riprovare.")}`);
-    }
+    alert(`${t(error.message)} ${t("Lo ZIP non è stato scaricato.")} ${t("La selezione è conservata: puoi correggere e riprovare.")}`);
   } finally { busy = false; refreshControls(); }
 });
 

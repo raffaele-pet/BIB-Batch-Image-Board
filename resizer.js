@@ -1,5 +1,5 @@
-import { t } from "./i18n.js?v=20261106-header";
-import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-header";
+import { t } from "./i18n.js?v=20261107-home";
+import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261107-home";
 
 // Editing/export engine ported from raffaele-pet/batch-image-resizer @ 90578aec62b8a62a86da868935547d655bb55859.
 (() => {
@@ -7,7 +7,11 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-
 
   const els = {
     fileInput: document.getElementById("resize-fileInput"),
+    folderInput: document.getElementById("resize-folderInput"),
     addImagesBtn: document.getElementById("resize-addImagesBtn"),
+    addFolderBtn: document.getElementById("resize-addFolderBtn"),
+    stageImagesBtn: document.getElementById("resize-stageImagesBtn"),
+    stageFolderBtn: document.getElementById("resize-stageFolderBtn"),
     removeBtn: document.getElementById("resize-removeBtn"),
     undoBtn: document.getElementById("resize-undoBtn"),
     ratioSelect: document.getElementById("resize-ratioSelect"),
@@ -283,6 +287,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-
   }
 
   async function addFiles(fileList) {
+    if (state.exporting) return;
     const files = Array.from(fileList || []).filter(f => f.type.startsWith("image/"));
     if (!files.length) {
       toast(t("Nessuna immagine valida selezionata."));
@@ -1044,6 +1049,9 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-
     const count = state.items.length;
 
     els.emptyState.classList.toggle("hidden", has);
+    for (const button of [els.addImagesBtn, els.addFolderBtn, els.stageImagesBtn, els.stageFolderBtn]) {
+      button.disabled = state.exporting;
+    }
     els.removeBtn.disabled = !has || state.exporting;
     els.undoBtn.disabled = !state.undoStack.length || state.exporting;
     els.fillBtn.disabled = !has || state.exporting;
@@ -1314,7 +1322,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-
       return;
     }
 
-    if (event.code === "Space") {
+    if (event.code === "Space" && !event.target.closest?.("button, a")) {
       state.spaceDown = true;
       els.canvas.style.cursor = "grab";
       event.preventDefault();
@@ -1353,7 +1361,7 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-
 
   function onKeyUp(event) {
     if (!isModeActive("ridimensiona")) return;
-    if (event.code === "Space") {
+    if (event.code === "Space" && state.spaceDown) {
       state.spaceDown = false;
       if (!state.pointer) els.canvas.style.cursor = "default";
       event.preventDefault();
@@ -1379,11 +1387,17 @@ import { isModeActive, setModeBusy } from "./workspace-navigation.js?v=20261106-
     addFiles(event.dataTransfer?.files);
   }
 
-  els.addImagesBtn.addEventListener("click", () => els.fileInput.click());
-  els.fileInput.addEventListener("change", () => {
-    addFiles(els.fileInput.files);
-    els.fileInput.value = "";
-  });
+  for (const [input, sidebarButton, stageButton] of [
+    [els.fileInput, els.addImagesBtn, els.stageImagesBtn],
+    [els.folderInput, els.addFolderBtn, els.stageFolderBtn]
+  ]) {
+    sidebarButton.addEventListener("click", () => input.click());
+    stageButton.addEventListener("click", () => input.click());
+    input.addEventListener("change", () => {
+      if (input.files.length) addFiles(input.files);
+      input.value = "";
+    });
+  }
 
   els.removeBtn.addEventListener("click", removeCurrent);
   els.undoBtn.addEventListener("click", undoEdit);

@@ -7,7 +7,7 @@
   <meta name="description" content="Strumenti batch per le tue immagini. Confronta, seleziona, ridimensiona ed esporta direttamente nel browser.">
   <title>BIB — Batch Image Board</title>
   <link rel="icon" href="favicon.svg?v=20261105-clean" type="image/svg+xml">
-  <link rel="stylesheet" href="workspace.css?v=20261106-header">
+  <link rel="stylesheet" href="workspace.css?v=20261107-home">
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -28,14 +28,14 @@
 
   <a class="skip-link" href="#workspace">Vai all’area di lavoro</a>
   <header class="site-header" id="toolbar">
-    <div class="brand" aria-label="BIB, strumenti per immagini">
+    <a class="brand" href="#" data-mode="" aria-label="BIB, pagina iniziale" aria-current="page">
       <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 22V7a3 3 0 0 1 3-3h15" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="9" width="19" height="19" rx="4" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.5"/><path d="m11 23 5-5 4 4 4-6 5 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
       <div><span class="brand-name">BIB<span class="brand-dot">.</span></span><span class="brand-caption">Batch Image Board</span></div>
-    </div>
+    </a>
     <nav class="mode-navigation" aria-label="Modalità di lavoro">
-      <a id="resizeMode" href="#ridimensiona" aria-controls="resizeApp"><svg class="icon" aria-hidden="true"><use href="#i-resize"/></svg>Ridimensiona</a>
-      <a id="sliderMode" href="#confronto" aria-current="page" aria-controls="sliderApp"><svg class="icon" aria-hidden="true"><use href="#i-compare"/></svg>Confronto</a>
-      <a id="selectionMode" href="#selezione" aria-controls="selectionApp"><svg class="icon" aria-hidden="true"><use href="#i-select"/></svg>Seleziona</a>
+      <a id="resizeMode" href="#ridimensiona" data-mode="ridimensiona" aria-controls="resizeApp"><svg class="icon" aria-hidden="true"><use href="#i-resize"/></svg>Ridimensiona</a>
+      <a id="sliderMode" href="#confronto" data-mode="confronto" aria-controls="sliderApp"><svg class="icon" aria-hidden="true"><use href="#i-compare"/></svg>Confronto</a>
+      <a id="selectionMode" href="#selezione" data-mode="selezione" aria-controls="selectionApp"><svg class="icon" aria-hidden="true"><use href="#i-select"/></svg>Seleziona</a>
 
     </nav>
     <div class="header-utilities">
@@ -48,11 +48,39 @@
   </header>
 
   <main id="workspace" class="workspace-shell" tabindex="-1">
-    <div class="workspace-heading">
+    <section id="home" class="home" aria-labelledby="homeTitle">
+      <div class="home-content">
+        <div class="home-heading">
+          <h1 id="homeTitle">BIB<span class="brand-dot">.</span></h1>
+          <p>Batch Image Board</p>
+        </div>
+        <div class="home-modes">
+          <a class="home-card" href="#ridimensiona" data-mode="ridimensiona">
+            <svg class="icon home-card-icon" aria-hidden="true"><use href="#i-resize"/></svg>
+            <h2>Ridimensiona</h2>
+            <p>Imposta dimensioni e inquadratura, poi esporta le immagini in un unico ZIP.</p>
+            <svg class="icon home-card-arrow flip-icon" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+          <a class="home-card" href="#confronto" data-mode="confronto">
+            <svg class="icon home-card-icon" aria-hidden="true"><use href="#i-compare"/></svg>
+            <h2>Confronto</h2>
+            <p>Confronta un originale e la sua versione modificata. Esporta il prima e dopo come video.</p>
+            <svg class="icon home-card-arrow flip-icon" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+          <a class="home-card" href="#selezione" data-mode="selezione">
+            <svg class="icon home-card-icon" aria-hidden="true"><use href="#i-select"/></svg>
+            <h2>Seleziona</h2>
+            <p>Passa in rassegna due raccolte, scarta gli scatti e salva quelli che preferisci.</p>
+            <svg class="icon home-card-arrow flip-icon" aria-hidden="true"><use href="#i-arrow"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+    <div class="workspace-heading" id="workspaceHeading" hidden>
       <div><h1 id="workspaceTitle">Confronto immagini</h1><p id="workspaceDescription">Due immagini, ogni dettaglio. Confronta e crea un prima e dopo.</p></div>
     </div>
 
-    <section id="sliderApp" class="workbench" aria-label="Confronto immagini">
+    <section id="sliderApp" class="workbench" aria-label="Confronto immagini" hidden>
       <div class="viewer-column">
         <div class="viewer-panel">
           <div class="viewer-heading"><h2><svg class="icon" aria-hidden="true"><use href="#i-compare"/></svg>Anteprima</h2><span class="quiet-tag">PRIMA / DOPO</span></div>
@@ -92,12 +120,23 @@
     <section id="selectionApp" class="workbench" aria-label="Selezione immagini" hidden>
       <div class="viewer-column">
         <div class="viewer-panel">
-          <div class="viewer-heading"><h2><svg class="icon" aria-hidden="true"><use href="#i-compare"/></svg>Anteprima</h2><span class="quiet-tag">SINISTRA / DESTRA</span></div>
           <div class="canvas-area">
             <div class="image-stage selection-stage" id="selectionStage">
               <canvas id="selectionCanvas" aria-label="Confronto delle immagini selezionate"></canvas>
-              <div class="selection-empty left-empty" id="leftEmpty"><div class="empty-content"><svg class="empty-icon" aria-hidden="true"><use href="#i-folder"/></svg><strong>Sinistra</strong><span>Carica immagini o una cartella</span></div></div>
-              <div class="selection-empty right-empty" id="rightEmpty"><div class="empty-content"><svg class="empty-icon" aria-hidden="true"><use href="#i-folder"/></svg><strong>Destra</strong><span>Carica immagini o una cartella</span></div></div>
+              <div class="selection-empty left-empty" id="leftEmpty">
+                <div class="stage-import">
+                  <button class="empty-content stage-pick" type="button" data-pick="leftFiles" aria-label="Carica immagini a sinistra"><svg class="empty-icon" aria-hidden="true"><use href="#i-image"/></svg><strong>Sinistra</strong><span>Carica immagini</span></button>
+                  <button class="button" type="button" data-pick="leftFolder" aria-label="Carica cartella a sinistra"><svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg>Cartella</button>
+                </div>
+                <p class="selection-preview-error" role="status" hidden></p>
+              </div>
+              <div class="selection-empty right-empty" id="rightEmpty">
+                <div class="stage-import">
+                  <button class="empty-content stage-pick" type="button" data-pick="rightFiles" aria-label="Carica immagini a destra"><svg class="empty-icon" aria-hidden="true"><use href="#i-image"/></svg><strong>Destra</strong><span>Carica immagini</span></button>
+                  <button class="button" type="button" data-pick="rightFolder" aria-label="Carica cartella a destra"><svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg>Cartella</button>
+                </div>
+                <p class="selection-preview-error" role="status" hidden></p>
+              </div>
               <button class="remove-image remove-left" id="removeLeft" type="button" aria-label="Escludi immagine a sinistra" title="Escludi immagine a sinistra · Ctrl+Z per annullare" disabled><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
               <button class="remove-image remove-right" id="removeRight" type="button" aria-label="Escludi immagine a destra" title="Escludi immagine a destra · Ctrl+Z per annullare" disabled><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
               <div class="selection-divider" id="selectionDivider"><div class="divider-handle" id="selectionHandle" role="slider" tabindex="0" aria-label="Posizione del confronto" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-orientation="horizontal">‹ ›</div></div>
@@ -123,18 +162,26 @@
         </section>
         </div>
         <section class="inspector-section export-section"><div class="section-heading"><h3>Esporta immagini</h3><span class="selection-total" id="keptCount">0 da salvare</span></div>
-          <div class="field-grid"><label class="field">Formato<select id="imageFormat"><option value="png">PNG</option><option value="jpg">JPG</option></select></label><label class="field">Destinazione<select id="saveDestination"><option value="folder">Cartella</option><option value="zip">Archivio ZIP</option></select></label></div>
-          <button class="button button-primary" id="saveSelection" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="saveLabel" aria-live="polite">Salva immagini</span></button>
+          <div class="field-grid">
+            <label class="field">Formato<select id="imageFormat"><option value="png">PNG</option><option value="jpg">JPG</option></select></label>
+            <label class="field">Nomi dei file<select id="selectionNaming"><option value="original">Originali</option><option value="sequence">Nome + sequenza</option></select></label>
+          </div>
+          <div id="selectionNamingCustom" class="custom-name" hidden><label class="field">Nome base<input id="selectionBaseName" type="text" value="image" placeholder="Nome base" autocomplete="off" spellcheck="false"></label></div>
+          <button class="button button-primary" id="saveSelection" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="saveLabel" aria-live="polite">Esporta ZIP</span></button>
         </section>
       </aside>
     </section>
     <section id="resizeApp" class="workbench" aria-label="Ridimensionamento immagini" hidden>
       <div class="viewer-column">
         <div class="viewer-panel">
-          <div class="viewer-heading"><h2><svg class="icon" aria-hidden="true"><use href="#i-resize"/></svg>Anteprima</h2><span class="quiet-tag">COMPOSIZIONE</span></div>
           <div id="resize-stageWrap" class="resize-stage">
             <canvas id="resize-stageCanvas" tabindex="0" aria-label="Area di ridimensionamento immagini"></canvas>
-            <div id="resize-emptyState" class="resize-empty-state"><div class="empty-content"><svg class="empty-icon" aria-hidden="true"><use href="#i-image"/></svg><strong>Immagini da ridimensionare</strong><span>Carica le immagini o trascinale qui</span></div></div>
+            <div id="resize-emptyState" class="resize-empty-state">
+              <div class="stage-import">
+                <button id="resize-stageImagesBtn" class="empty-content stage-pick" type="button" aria-label="Aggiungi immagini da ridimensionare"><svg class="empty-icon" aria-hidden="true"><use href="#i-image"/></svg><strong>Immagini da ridimensionare</strong><span>Carica o trascina qui le immagini</span></button>
+                <button id="resize-stageFolderBtn" class="button" type="button" aria-label="Aggiungi cartella da ridimensionare"><svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg>Cartella</button>
+              </div>
+            </div>
             <div id="resize-dropOverlay" class="resize-drop-overlay">Rilascia le immagini qui</div>
           </div>
         </div>
@@ -145,7 +192,11 @@
           <section class="inspector-section resize-library-section">
             <div class="section-heading"><h3>Raccolta</h3><span id="resize-counterLabel" class="section-meta" aria-live="polite">0 immagini</span></div>
             <input id="resize-fileInput" class="file-input" type="file" accept="image/*" multiple tabindex="-1" aria-label="Aggiungi immagini da ridimensionare">
-            <button id="resize-addImagesBtn" class="button source-upload" type="button"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>Aggiungi immagini</button>
+            <input id="resize-folderInput" class="file-input" type="file" accept="image/*" webkitdirectory multiple tabindex="-1" aria-label="Aggiungi cartella da ridimensionare">
+            <div class="source-actions">
+              <button id="resize-addImagesBtn" class="button" type="button" aria-label="Aggiungi immagini da ridimensionare"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg>Immagini</button>
+              <button id="resize-addFolderBtn" class="button" type="button" aria-label="Aggiungi cartella da ridimensionare"><svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg>Cartella</button>
+            </div>
             <div id="resize-thumbStrip" class="resize-thumb-strip" aria-label="Sequenza di immagini"></div>
             <div class="resize-navigation">
               <button id="resize-prevBtn" class="button icon-button" type="button" disabled aria-label="Immagine precedente"><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
@@ -189,15 +240,15 @@
             <label class="field">Nomi dei file<select id="resize-namingSelect"><option value="original" selected>Originali</option><option value="sequence">Nome + sequenza</option></select></label>
           </div>
           <label id="resize-qualityRow" class="resize-quality-row">Qualità<input id="resize-qualityRange" type="range" min="50" max="100" step="1" value="95"><span id="resize-qualityValue">95</span></label>
-          <div id="resize-namingCustom" class="resize-custom-name hidden"><label class="field">Nome base<input id="resize-baseNameInput" type="text" value="image" placeholder="Nome base" autocomplete="off" spellcheck="false"></label></div>
+          <div id="resize-namingCustom" class="custom-name hidden"><label class="field">Nome base<input id="resize-baseNameInput" type="text" value="image" placeholder="Nome base" autocomplete="off" spellcheck="false"></label></div>
           <button id="resize-exportAllTopBtn" class="button button-primary" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span id="resize-exportStatus" aria-live="polite">Esporta ZIP</span></button>
         </section>
       </aside>
       <div id="resize-toast" class="resize-toast" role="status" aria-live="polite"></div>
     </section>
   </main>
-  <script type="module" src="slider.js?v=20261106-header"></script>
-  <script type="module" src="selection.js?v=20261106-header"></script>
-  <script type="module" src="resizer.js?v=20261106-header"></script>
+  <script type="module" src="slider.js?v=20261107-home"></script>
+  <script type="module" src="selection.js?v=20261107-home"></script>
+  <script type="module" src="resizer.js?v=20261107-home"></script>
 </body>
 </html>

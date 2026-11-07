@@ -42,7 +42,13 @@ export function navigate(selection, delta) {
   selection.index = Math.max(0, Math.min(pairCount(selection) - 1, selection.index + delta));
 }
 
-export function exportEntries(selection, format) {
+function safeStem(value) {
+  const stem = value.trim().replace(/[\\/:*?"<>|\x00-\x1f]/g, "-")
+    .slice(0, 140).replace(/[. ]+$/g, "") || "image";
+  return /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(stem) ? `_${stem}` : stem;
+}
+
+export function exportEntries(selection, format, baseName = null) {
   const entries = [];
   for (let i = 0; i < pairCount(selection); i++) {
     for (const side of ["left", "right"]) {
@@ -50,15 +56,28 @@ export function exportEntries(selection, format) {
       if (entry && !entry.excluded) entries.push(entry);
     }
   }
-  const digits = Math.max(4, String(entries.length).length);
+  if (baseName !== null) {
+    const base = safeStem(baseName);
+    const digits = Math.max(3, String(entries.length).length);
+    return entries.map((entry, i) => ({
+      ...entry, name: `${base}_${String(i + 1).padStart(digits, "0")}.${format}`
+    }));
+  }
+
+  const names = entries.map(({ file }) => `${safeStem(file.name.replace(/\.[^.]+$/, ""))}.${format}`);
+  // A duplicate must not take the original name of another image later in the ZIP.
+  const reserved = new Set(names.map((name) => name.toLowerCase()));
+  const used = new Set();
   return entries.map((entry, i) => {
-    const base = entry.file.name.replace(/\.[^.]+$/, "")
-      .replace(/[\\/:*?"<>|\x00-\x1f]/g, "-").replace(/[. ]+$/g, "").slice(0, 140) || "immagine";
-    return { ...entry, name: `${String(i + 1).padStart(digits, "0")}_${base}.${format}` };
+    const name = names[i];
+    const key = name.toLowerCase();
+    if (used.has(key)) return { ...entry, name: uniqueName(name, reserved) };
+    used.add(key);
+    return { ...entry, name };
   });
 }
 
-export function uniqueName(name, occupied) {
+function uniqueName(name, occupied) {
   const dot = name.lastIndexOf(".");
   const base = name.slice(0, dot);
   const extension = name.slice(dot);
